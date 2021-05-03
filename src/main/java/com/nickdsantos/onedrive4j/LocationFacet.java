@@ -7,15 +7,15 @@ public class LocationFacet {
     /**
      * The altitude for the item (in feet).
      */
-    public double altitude;
+    public Double altitude;
 
     /**
      * The latitude.
      */
-    public double latitude;
+    public Double latitude;
 
     /**
      * The longitude.
      */
-    public double longitude;
+    public Double longitude;
 }

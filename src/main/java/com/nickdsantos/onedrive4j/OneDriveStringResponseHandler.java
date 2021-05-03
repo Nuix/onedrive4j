@@ -8,7 +8,7 @@ import org.apache.http.client.ResponseHandler;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
  * A response handler which returns the response content as a string.
@@ -20,7 +20,7 @@ public class OneDriveStringResponseHandler implements ResponseHandler<String> {
 	public String handleResponse(HttpResponse response) throws IOException {
 		HttpEntity respEntity = response.getEntity();
 		if (respEntity != null) {
-			Reader reader = new InputStreamReader(respEntity.getContent(), Charset.forName("UTF-8"));
+			Reader reader = new InputStreamReader(respEntity.getContent(), StandardCharsets.UTF_8);
 			return CharStreams.toString(reader);
 		}
 		

@@ -1,9 +1,17 @@
-/**
+/*
  * Copyright (c) 2014 All Rights Reserved, nickdsantos.com
  */
 
 package com.nickdsantos.onedrive4j;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import org.apache.http.Consts;
 import org.apache.http.NameValuePair;
@@ -15,14 +23,6 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.log4j.Logger;
-
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 /**
  * @author Nick DS (me@nickdsantos.com)
@@ -47,6 +47,7 @@ public class OneDrive {
 	public static final String DEFAULT_SCHEME = "https";	
 	public static final String AUTHORIZE_URL_PATH = "/oauth20_authorize.srf";
 	public static final String ACCESS_TOKEN_URL_PATH = "/oauth20_token.srf";
+	private static final URI ACCESS_TOKEN_URI = buildAccessTokenURI();
 	
 	private String _clientId;
 	private String _clientSecret;
@@ -98,27 +99,17 @@ public class OneDrive {
 	
 	public AccessToken getAccessToken(String authorizationCode) throws IOException {
 		AccessToken accessToken = null;
-		URI uri;
-		try {
-			uri = new URIBuilder()
-						.setScheme(DEFAULT_SCHEME)
-						.setHost(LOGIN_API_HOST)
-						.setPath(ACCESS_TOKEN_URL_PATH)
-						.build();
-		} catch (URISyntaxException e) {
-			throw new IllegalStateException("Invalid access token path", e);
-		}
-				
-		List<NameValuePair> params = new ArrayList<>();
-		params.add(new BasicNameValuePair("client_id", _clientId));
-		params.add(new BasicNameValuePair("redirect_uri", _callback));
-		params.add(new BasicNameValuePair("client_secret", _clientSecret));
-		params.add(new BasicNameValuePair("code", authorizationCode));
-		params.add(new BasicNameValuePair("grant_type", "authorization_code"));
+
+		List<NameValuePair> params = ImmutableList.<NameValuePair>of(
+				new BasicNameValuePair("client_id", _clientId),
+				new BasicNameValuePair("redirect_uri", _callback),
+				new BasicNameValuePair("client_secret", _clientSecret),
+				new BasicNameValuePair("code", authorizationCode),
+				new BasicNameValuePair("grant_type", "authorization_code"));
 		UrlEncodedFormEntity formEntity = new UrlEncodedFormEntity(params, Consts.UTF_8);
 
 		try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-			HttpPost httpPost = new HttpPost(uri);
+			HttpPost httpPost = new HttpPost(ACCESS_TOKEN_URI);
 			httpPost.setEntity(formEntity);
 
 			Map<Object, Object> rawResponse = httpClient.execute(httpPost, new OneDriveJsonToMapResponseHandler());
@@ -148,27 +139,17 @@ public class OneDrive {
      */
 	public AccessToken getAccessTokenFromRefreshToken(String refreshToken) throws IOException {
 		AccessToken accessToken = null;
-		URI uri;
-		try {
-			uri = new URIBuilder()
-						.setScheme(DEFAULT_SCHEME)
-						.setHost(LOGIN_API_HOST)
-						.setPath(ACCESS_TOKEN_URL_PATH)
-						.build();
-		} catch (URISyntaxException e) {
-			throw new IllegalStateException("Invalid access token path", e);
-		}
 
-		List<NameValuePair> params = new ArrayList<>();
-		params.add(new BasicNameValuePair("client_id", _clientId));
-		params.add(new BasicNameValuePair("redirect_uri", _callback));
-		params.add(new BasicNameValuePair("client_secret", _clientSecret));
-		params.add(new BasicNameValuePair("refresh_token", refreshToken));
-		params.add(new BasicNameValuePair("grant_type", "refresh_token"));
+		List<NameValuePair> params = ImmutableList.<NameValuePair>of(
+			new BasicNameValuePair("client_id", _clientId),
+			new BasicNameValuePair("redirect_uri", _callback),
+			new BasicNameValuePair("client_secret", _clientSecret),
+			new BasicNameValuePair("refresh_token", refreshToken),
+			new BasicNameValuePair("grant_type", "refresh_token"));
 		UrlEncodedFormEntity formEntity = new UrlEncodedFormEntity(params, Consts.UTF_8);
 
 		try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-			HttpPost httpPost = new HttpPost(uri);
+			HttpPost httpPost = new HttpPost(ACCESS_TOKEN_URI);
 			httpPost.setEntity(formEntity);
 
 			Map<Object, Object> rawResponse = httpClient.execute(httpPost, new OneDriveJsonToMapResponseHandler());
@@ -187,6 +168,18 @@ public class OneDrive {
 		}
 
 		return accessToken;
+	}
+
+	private static URI buildAccessTokenURI() {
+		try {
+			return new URIBuilder()
+					.setScheme(DEFAULT_SCHEME)
+					.setHost(LOGIN_API_HOST)
+					.setPath(ACCESS_TOKEN_URL_PATH)
+					.build();
+		} catch (URISyntaxException e) {
+			throw new IllegalStateException("Invalid access token path", e);
+		}
 	}
 
 	/**

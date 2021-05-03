@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2014 All Rights Reserved, nickdsantos.com
  */
 
@@ -20,7 +20,7 @@ public class Resource {
 		PeopleWithLink("People with a link");
 		
 		private final String _val;
-		private SharedWith(String val) {
+		SharedWith(String val) {
 			_val = val;			
 		}
 		
@@ -196,7 +196,7 @@ public class Resource {
 	}
 	
 	/**
-	 * @param shared_with the shared_with to set
+	 * @param sharedWith the shared_with to set
 	 */
 	public void setSharedWith(SharedWith sharedWith) {
 		_sharedWith = sharedWith;

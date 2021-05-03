@@ -1,8 +1,14 @@
-/**
+/*
  * Copyright (c) 2014 All Rights Reserved, nickdsantos.com
  */
 
 package com.nickdsantos.onedrive4j;
+
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -18,12 +24,6 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicHeader;
 import org.apache.log4j.Logger;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.text.SimpleDateFormat;
-import java.util.*;
-
 /**
  * @author Nick DS (me@nickdsantos.com)
  *
@@ -34,6 +34,8 @@ public class PhotoService {
 	public static final String API_HOST = "apis.live.net/v5.0";
 	public static final String DEFAULT_SCHEME = "https";	
 	public static final String ALBUM_URL_PATH = "/me/albums";
+	private static final Photo[] NO_PHOTOS = new Photo[0];
+	private static final ImageItem[] NO_IMAGE_ITEMS = new ImageItem[0];
 	
 	/**
 	 * This class should only be instantiated from the OneDrive.getPhotoService() method.
@@ -48,7 +50,7 @@ public class PhotoService {
 	 * @throws IOException
 	 */
 	public Photo[] getPhotos(String accessToken, String albumId) throws IOException {
-		ArrayList<Photo> photos = new ArrayList<>();
+		List<Photo> photos = new ArrayList<>();
 		URI uri;
 		try {			
 			uri = new URIBuilder()
@@ -65,6 +67,7 @@ public class PhotoService {
 			HttpGet httpGet = new HttpGet(uri);
 			Map<Object, Object> rawResponse = httpClient.execute(httpGet, new OneDriveJsonToMapResponseHandler());
 			if (rawResponse != null) {
+				@SuppressWarnings("unchecked")
 				List<Map<Object, Object>> rawResponseList = (List<Map<Object, Object>>) rawResponse.get("data");
 				if (rawResponseList != null) {
 					for (Map<Object, Object> respData : rawResponseList) {
@@ -79,7 +82,7 @@ public class PhotoService {
 			throw new IOException("Error getting photos, album: " + albumId, e);
 		}
 		
-		return photos.toArray(new Photo[photos.size()]);
+		return photos.toArray(NO_PHOTOS);
 	}
 	
 	/**
@@ -267,24 +270,25 @@ public class PhotoService {
 			}
 		}
 		
-		SimpleDateFormat dtFormat = new SimpleDateFormat("YYYY-MM-dd'T'HH:mm:ssZ");	
+		SimpleDateFormat dtFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
 		Photo photo = null;
 		if (responseMap.get("type").equals("photo")) {
 			try {
 				// Get embedded from JSON
-				Map<String, String> fromUserMap = (Map<String, String>) responseMap.get("from");
+				Map<?, ?> fromUserMap = (Map<?, ?>) responseMap.get("from");
 				User fromUser = new User();
-				fromUser.setId(fromUserMap.get("id"));
-				fromUser.setName(fromUserMap.get("name"));
+				fromUser.setId(fromUserMap.get("id").toString());
+				fromUser.setName(fromUserMap.get("name").toString());
 				
 				// Get embedded shared_with JSON
-				Map<String, String> sharedWithMap = (Map<String, String>) responseMap.get("shared_with");
-				SharedWith sharedWith = SharedWith.parse(sharedWithMap.get("access"));		
+				Map<?, ?> sharedWithMap = (Map<?, ?>) responseMap.get("shared_with");
+				SharedWith sharedWith = SharedWith.parse(sharedWithMap.get("access").toString());
 				
 				// Get embedded images JSON array
-				List<Map<Object, Object>> imageMapList = (List<Map<Object, Object>>) responseMap.get("images");
-				List<ImageItem> images = new ArrayList<ImageItem>();
-				for (Map<Object, Object> imageMap : imageMapList) {
+				List<?> imageMapList = (List<?>) responseMap.get("images");
+				List<ImageItem> images = new ArrayList<>();
+				for (Object imageMapObject : imageMapList) {
+					Map<?, ?> imageMap = (Map<?, ?>) imageMapObject;
 					ImageItem image = new ImageItem();
 					image.setHeight((double) imageMap.get("height"));
 					image.setWidth((double) imageMap.get("width"));
@@ -295,7 +299,7 @@ public class PhotoService {
 				}
 				
 				// Get embedded location JSON
-				Map<Object, Object> locationMap = (Map<Object, Object>) responseMap.get("location");
+				Map<?, ?> locationMap = (Map<?, ?>) responseMap.get("location");
 				Location location = null;
 				if (locationMap != null) {
 					location = new Location();
@@ -311,15 +315,15 @@ public class PhotoService {
 				photo.setDescription((String) responseMap.get("description"));
 				photo.setParentId((String) responseMap.get("parent_id"));
 				photo.setSize((double) responseMap.get("size"));
-				photo.setCommentsCount((int) ((Double) responseMap.get("comments_count")).intValue());
+				photo.setCommentsCount(((Number) responseMap.get("comments_count")).intValue());
 				photo.setCommentsEnabled((boolean) responseMap.get("comments_enabled"));
-				photo.setTagsCount((int) ((Double) responseMap.get("tags_count")).intValue());
+				photo.setTagsCount(((Number) responseMap.get("tags_count")).intValue());
 				photo.setTagsEnabled((boolean) responseMap.get("tags_enabled"));
 				photo.setIsEmbeddable((boolean) responseMap.get("is_embeddable"));
 				photo.setLink((String) responseMap.get("picture"));
 				photo.setLink((String) responseMap.get("source"));
 				photo.setUploadLocation((String) responseMap.get("upload_location"));
-				photo.setImages(images.toArray(new ImageItem[images.size()]));
+				photo.setImages(images.toArray(NO_IMAGE_ITEMS));
 				photo.setLink((String) responseMap.get("link"));	
 				if (responseMap.get("when_taken") != null)
 					photo.setWhenTaken(dtFormat.parse((String) responseMap.get("when_taken")));

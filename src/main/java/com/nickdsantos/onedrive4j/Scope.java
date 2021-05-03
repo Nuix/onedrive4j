@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2014 All Rights Reserved, nickdsantos.com
  */
 
@@ -20,7 +20,7 @@ public enum Scope {
 	SKYDRIVE_UPDATE("wl.skydrive_update");
 	
 	private final String _val;
-	private Scope(String val) {
+	Scope(String val) {
 		_val = val;
 	}
 	

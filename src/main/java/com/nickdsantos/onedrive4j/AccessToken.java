@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2014 All Rights Reserved, nickdsantos.com
  */
 
@@ -14,7 +14,7 @@ public class AccessToken {
 	private int _expiresIn;
 	private String _scope;
 	private String _accessToken;
-	private String _refreshoken;
+	private String _refreshToken;
 	private String _userId;
 	
 	public AccessToken(String tokenType, int expiresIn, String scope, String accessToken, String refreshToken,
@@ -23,7 +23,7 @@ public class AccessToken {
 		_expiresIn = expiresIn;
 		_scope = scope;
 		_accessToken = accessToken;
-		_refreshoken = refreshToken;
+		_refreshToken = refreshToken;
 		_userId = userId;
 	}
 	
@@ -89,7 +89,7 @@ public class AccessToken {
 	 * @return the refresh token.
 	 */
 	public String getRefreshToken() {
-		return _refreshoken;
+		return _refreshToken;
 	}
 
 	/**

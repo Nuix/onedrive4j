@@ -1,7 +1,7 @@
 package com.nickdsantos.onedrive4j;
 
 /**
- * Details about the user who own's the OneDrive account.
+ * Details about the user who owns the OneDrive account.
  */
 public class Me {
     /**

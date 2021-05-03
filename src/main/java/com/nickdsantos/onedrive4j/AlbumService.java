@@ -24,15 +24,16 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicHeader;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Nick DS (me@nickdsantos.com)
  *
  */
 public class AlbumService {
-	static Logger logger = Logger.getLogger(AlbumService.class.getName());		
-	
+	static Logger logger = LoggerFactory.getLogger(AlbumService.class.getName());
+
 	public static final String API_HOST = "apis.live.net/v5.0";
 	public static final String DEFAULT_SCHEME = "https";	
 	public static final String ALBUM_URL_PATH = "/me/albums";

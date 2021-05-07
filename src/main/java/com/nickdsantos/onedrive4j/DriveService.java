@@ -8,7 +8,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,6 +17,7 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
+import java.util.concurrent.Callable;
 
 /**
  * A service for accessing the OneDrive files.
@@ -30,11 +30,13 @@ public class DriveService {
     public static final String API_HOST = "api.onedrive.com/v1.0";
     public static final String DEFAULT_SCHEME = "https";
     public static final String DRIVES_URL_PATH = "/drives";
+    private final Callable<CloseableHttpClient> _httpClientBuilder;
 
     /**
      * This class should only be instantiated from the OneDrive.getDriveService() method.
      */
-    protected DriveService() {
+    protected DriveService(Callable<CloseableHttpClient> httpClientBuilder) {
+        _httpClientBuilder = httpClientBuilder;
     }
 
     /**
@@ -57,7 +59,7 @@ public class DriveService {
             throw new IllegalStateException("Invalid drives path", e);
         }
 
-        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+        try (CloseableHttpClient httpClient = _httpClientBuilder.call()) {
             HttpGet httpGet = new HttpGet(uri);
             String rawResponse = httpClient.execute(httpGet, new OneDriveStringResponseHandler());
 
@@ -129,7 +131,7 @@ public class DriveService {
     private List<DriveItem> getDriveItemsImpl(URI uri) throws IOException {
         ImmutableList.Builder<DriveItem> driveItems = new ImmutableList.Builder<>();
 
-        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+        try (CloseableHttpClient httpClient = _httpClientBuilder.call()) {
 
             while (uri != null) {
                 HttpGet httpGet = new HttpGet(uri);
@@ -174,7 +176,7 @@ public class DriveService {
             throw new IllegalStateException("Invalid drives path", e);
         }
 
-        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+        try (CloseableHttpClient httpClient = _httpClientBuilder.call()) {
             HttpGet httpGet = new HttpGet(uri);
             try (InputStream inputStream = httpClient.execute(httpGet).getEntity().getContent())
             {

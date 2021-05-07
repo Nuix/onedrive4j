@@ -32,18 +32,6 @@ import org.slf4j.LoggerFactory;
 public class OneDrive {
 	static Logger logger = LoggerFactory.getLogger(OneDrive.class.getName());
 	
-	private static class AlbumServiceHolder {
-		public static AlbumService _albumServiceInstance = new AlbumService();
-	}
-	
-	private static class PhotoServiceHolder {
-		public static PhotoService _photoServiceInstance = new PhotoService();
-	}
-
-	private static class DriveServiceHolder {
-		public static DriveService _driveServiceInstance = new DriveService();
-	}
-	
 	public static final String LOGIN_API_HOST = "login.live.com";
 	public static final String DEFAULT_SCHEME = "https";	
 	public static final String AUTHORIZE_URL_PATH = "/oauth20_authorize.srf";
@@ -64,15 +52,15 @@ public class OneDrive {
 	}
 	
 	public AlbumService getAlbumService() {
-		return AlbumServiceHolder._albumServiceInstance;
+		return new AlbumService(_httpClientBuilder);
 	}
 	
 	public PhotoService getPhotoService() {
-		return PhotoServiceHolder._photoServiceInstance;
+		return new PhotoService(_httpClientBuilder);
 	}
 
 	public DriveService getDriveService() {
-		return DriveServiceHolder._driveServiceInstance;
+		return new DriveService(_httpClientBuilder);
 	}
 	
 	public String authorize(Scope[] scopes) {				

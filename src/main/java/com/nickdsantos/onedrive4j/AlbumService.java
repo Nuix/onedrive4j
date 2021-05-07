@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -22,7 +23,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,8 +38,11 @@ public class AlbumService {
 	public static final String DEFAULT_SCHEME = "https";	
 	public static final String ALBUM_URL_PATH = "/me/albums";
 	private static final Album[] NO_ALBUMS = new Album[0];
+	private final Callable<CloseableHttpClient> _httpClientBuilder;
 
-	protected AlbumService() {}
+	protected AlbumService(Callable<CloseableHttpClient> httpClientBuilder) {
+		_httpClientBuilder = httpClientBuilder;
+	}
 	
 	public Album[] getAlbums(String accessToken) throws IOException {
 		List<Album> albums = new ArrayList<>();
@@ -55,7 +58,7 @@ public class AlbumService {
 			throw new IllegalStateException("Invalid album path", e);
 		}
 
-		try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+		try (CloseableHttpClient httpClient = _httpClientBuilder.call()) {
 			HttpGet httpGet = new HttpGet(uri);
 			Map<Object, Object> rawResponse = httpClient.execute(httpGet, new OneDriveJsonToMapResponseHandler());
 			if (rawResponse != null) {
@@ -88,7 +91,7 @@ public class AlbumService {
 			throw new IllegalStateException("Invalid album path", e);
 		}
 
-		try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+		try (CloseableHttpClient httpClient = _httpClientBuilder.call()) {
 			HttpGet httpGet = new HttpGet(uri);
 			Map<Object, Object> rawResponse = httpClient.execute(httpGet, new OneDriveJsonToMapResponseHandler());
 			if (rawResponse != null) {
@@ -114,7 +117,7 @@ public class AlbumService {
 			throw new IllegalStateException("Invalid album path", e);
 		}
 
-		try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+		try (CloseableHttpClient httpClient = _httpClientBuilder.call()) {
 			Map<Object, Object> rawResponse = executeRequest(httpClient, uri, name, description, accessToken);
 			if (rawResponse != null) {
 				if (rawResponse.containsKey("error")) {
@@ -141,8 +144,10 @@ public class AlbumService {
 				throw new IOException("No response");
 			}
 
+		} catch (Exception e) {
+			throw new RuntimeException("Error creating HTTP Client", e);
 		}
-	
+
 		return newAlbum;
 	}
 	
@@ -159,12 +164,14 @@ public class AlbumService {
 			throw new IllegalStateException("Invalid album path", e);
 		}
 
-		try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+		try (CloseableHttpClient httpClient = _httpClientBuilder.call()) {
 			HttpDelete httpDelete = new HttpDelete(uri);
 			Map<Object, Object> rawResponse = httpClient.execute(httpDelete, new OneDriveJsonToMapResponseHandler());
 			if (rawResponse != null) {
 				System.out.println(rawResponse);
 			}
+		} catch (Exception e) {
+			throw new RuntimeException("Error creating HTTP Client", e);
 		}
 	}
 	
@@ -181,15 +188,17 @@ public class AlbumService {
 			throw new IllegalStateException("Invalid album path", e);
 		}
 
-		try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+		try (CloseableHttpClient httpClient = _httpClientBuilder.call()) {
 			Map<Object, Object> rawResponse = executeRequest(httpClient, uri, name, description, accessToken);
 			if (rawResponse != null) {
 				updatedAlbum = createAlbumFromMap(rawResponse);
 				// Do not get the updated id. revert to the original prior to the update
 				updatedAlbum.setId(albumId);
 			}
+		} catch (Exception e) {
+			throw new RuntimeException("Error creating HTTP Client", e);
 		}
-	
+
 		return updatedAlbum;
 	}
 

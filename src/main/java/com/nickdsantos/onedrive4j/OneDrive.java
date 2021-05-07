@@ -10,6 +10,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.Callable;
 
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
@@ -20,7 +21,6 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,11 +53,14 @@ public class OneDrive {
 	private String _clientId;
 	private String _clientSecret;
 	private String _callback;		
-	
-	public OneDrive(String clientId, String clientSecret, String callback) {
+	private Callable<CloseableHttpClient> _httpClientBuilder;
+
+	public OneDrive(String clientId, String clientSecret, String callback,
+					Callable<CloseableHttpClient> httpClientBuilder) {
 		_clientId = clientId;
 		_clientSecret = clientSecret;
 		_callback = callback;
+		_httpClientBuilder = httpClientBuilder;
 	}
 	
 	public AlbumService getAlbumService() {
@@ -109,7 +112,7 @@ public class OneDrive {
 				new BasicNameValuePair("grant_type", "authorization_code"));
 		UrlEncodedFormEntity formEntity = new UrlEncodedFormEntity(params, Consts.UTF_8);
 
-		try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+		try (CloseableHttpClient httpClient = _httpClientBuilder.call()) {
 			HttpPost httpPost = new HttpPost(ACCESS_TOKEN_URI);
 			httpPost.setEntity(formEntity);
 
@@ -126,8 +129,10 @@ public class OneDrive {
 						Objects.toString(rawResponse.get("refresh_token"), null),
 						rawResponse.get("user_id").toString());
 			}
+		} catch (Exception e) {
+			throw new RuntimeException("Error creating HTTP Client", e);
 		}
-		
+
 		return accessToken;
 	}
 
@@ -149,7 +154,7 @@ public class OneDrive {
 			new BasicNameValuePair("grant_type", "refresh_token"));
 		UrlEncodedFormEntity formEntity = new UrlEncodedFormEntity(params, Consts.UTF_8);
 
-		try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+		try (CloseableHttpClient httpClient = _httpClientBuilder.call()) {
 			HttpPost httpPost = new HttpPost(ACCESS_TOKEN_URI);
 			httpPost.setEntity(formEntity);
 
@@ -166,6 +171,8 @@ public class OneDrive {
 						Objects.toString(rawResponse.get("refresh_token"), null),
 						Objects.toString(rawResponse.get("user_id"), null));
 			}
+		} catch (Exception e) {
+			throw new RuntimeException("Error creating HTTP Client", e);
 		}
 
 		return accessToken;
@@ -203,7 +210,7 @@ public class OneDrive {
 			throw new IllegalStateException("Invalid drives path", e);
 		}
 
-		try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+		try (CloseableHttpClient httpClient = _httpClientBuilder.call()) {
 			HttpGet httpGet = new HttpGet(uri);
 			String rawResponse = httpClient.execute(httpGet, new OneDriveStringResponseHandler());
 			return new Gson().fromJson(rawResponse, Me.class);

@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.nickdsantos.onedrive4j</groupId>
   <artifactId>onedrive4j</artifactId>
-  <version>0.0.2</version>
+  <version>0.0.2.nuix1.11</version>
   <name>OneDrive4J</name>
   <description>OneDrive Library for Java</description>
   <dependencies>
